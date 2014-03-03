@@ -1,0 +1,27 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet", href="/bootstrap/css/bootstrap.min.css")
+    link(rel="stylesheet", href="/stylesheets/style.css")
+    script(src="/socket.io/socket.io.js")
+    script(src="/javascripts/jquery-1.9.1.min.js")
+    script(src="/bootstrap/js/bootstrap.min.js")
+    script(src="/javascripts/chat.js")
+  body
+    div(id="wrapper")
+      div(id="upperBox")
+        div(id="chatrooms")
+          //Nav Tabs
+          ul(class="nav nav-tabs", id="tablist")
+            li(class="active")
+              a(href="#public", data-toggle="tab") Public
+
+          // (Chat Window + Members) in one div corresponding to a chatroom
+          div(class="tab-content", id="chatwindows")
+            div(class="tab-pane active", id="public").
+              You haven't joined any chatrooms yet.
+
+      div(id="lowerbox")
+        // actual message
+        input(type="text", id="send", placeholder="Enter message here.")
