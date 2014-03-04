@@ -31,25 +31,27 @@ server.listen(app.get('port'));
 
 var usernames = [];
 
-var room_user_map = {'Public':[]};
+var room_user_map = {};
 
 io.sockets.on('connection', function (socket) {
     socket.on('adduser', function(username){
         var flag = 0;
-        for(int i=0; i<usernames.length; i++){
+        for(var i=0; i<usernames.length; i++){
             if(usernames[i] == username){
                 flag = 1;
                 break;
             }
         }
+        if(username == 'SERVER') flag = 1;
         if(flag){
             socket.emit('message', "User exists already. Pick another username");
         }
         else{
             socket.username = username;
-            socket.emit('message', "User created.");
-            socket.emit('addeduser', socket.username);
             usernames.push(username);
+            socket.emit('message', "User created.");
+            socket.emit('addeduser');
+            socket.emit('updateroomlist', room_user_map);
         }
     });
 
@@ -72,17 +74,17 @@ io.sockets.on('connection', function (socket) {
             socket.emit('message', "Room created.");
             socket.emit('addroom', roomname);
             socket.emit('joinedroom', roomname);
-            socket.broadcast.to(roomname).emit('updatechat', 'SERVER',  socket.username + ' has connected to the room');
-            socket.broadcast.to(roomname).emit('updaterooms', room_user_map, roomname);
-            socket.broadcast.emit('updateroomlist', room_user_map);
+            io.sockets.in(roomname).emit('updatechat', roomname, 'SERVER', socket.username + ' has connected to the room');
+            io.sockets.in(roomname).emit('updatemembers', roomname, room_user_map);
+            io.sockets.emit('updateroomlist', room_user_map);
         }
     });
 
     socket.on('joinroom', function(roomname){
         // if already joined, tell the user of it
-        var room_users = room_user_map[roomname]
+        var room_users = room_user_map[roomname];
         var flag = 0;
-        for(int i=0; i<room_users.length; i++){
+        for(var i=0; i<room_users.length; i++){
             if(room_users[i] == socket.username){
                 flag = 1;
                 break;
@@ -99,15 +101,14 @@ io.sockets.on('connection', function (socket) {
             socket.emit('message', "Joined successfully."); 
             socket.emit('addroom', roomname);
             socket.emit('joinedroom', roomname);
-            socket.broadcast.to(roomname).emit('updatechat', 'SERVER',  socket.username + ' has connected to the room');
-            socket.broadcast.to(roomname).emit('updaterooms', room_user_map, roomname);
-            socket.broadcast.emit('updateroomlist', room_user_map);
+            io.sockets.in(roomname).emit('updatechat', roomname, 'SERVER',  socket.username + ' has connected to the room');
+            io.sockets.in(roomname).emit('updatemembers', roomname, room_user_map);
+            //io.sockets.emit('updateroomlist', room_user_map);
         }
     });
 
     socket.on('sendchat', function (data, roomname) {
-        // we tell the client to execute 'updatechat' with 2 parameters
-        io.sockets.in(roomname).emit('updatechat', socket.username, data);
+        io.sockets.in(roomname).emit('updatechat', roomname, socket.username, data);
     });
 
     socket.on('leaveroom', function(roomname){
@@ -122,21 +123,26 @@ io.sockets.on('connection', function (socket) {
         else{
             socket.emit('removeroom', roomname);
             socket.emit('leftroom', room_user_map);
-            socket.broadcast.to(roomname).emit('updatechat', 'SERVER',  socket.username + ' has left the room');
-            socket.broadcast.to(roomname).emit('updaterooms', room_user_map, roomname);
+            io.sockets.in(roomname).emit('updatechat', roomname, 'SERVER',  socket.username + ' has left the room');
+            io.sockets.in(roomname).emit('updatemembers', roomname, room_user_map);
         }
     });
 
     socket.on('disconnect', function(){
         var all_rooms = io.sockets.manager.roomClients[socket.id];
+        //console.log("YOLO" + all_rooms);
         for(var roomname in all_rooms){
+            if(roomname==="") continue;
+            console.log(roomname.slice(1) + ': ' + all_rooms[roomname])
             var index = room_user_map[roomname].indexOf(socket.username);
-            room_user_map[roomname].splice(index, 1);
-            socket.leave(room);
-            // #TODO: Needed?
-            socket.emit('removeroom', roomname);
-            socket.broadcast.to(roomname).emit('updatechat', 'SERVER',  socket.username + ' has left the room');
-            socket.broadcast.to(roomname).emit('updaterooms', room_user_map, roomname);
+            if(index != -1){
+                room_user_map[roomname].splice(index, 1);
+                socket.leave(room);
+                // #TODO: Needed?
+                socket.emit('removeroom', roomname);
+                io.sockets.in(roomname).emit('updatechat', roomname, 'SERVER',  socket.username + ' has left the room');
+                io.sockets.in(roomname).emit('updatemembers', roomname, room_user_map);
+            }
         }
         var index = usernames.indexOf(socket.username);
         usernames.splice(index, 1);
@@ -145,6 +151,6 @@ io.sockets.on('connection', function (socket) {
 
 app.get('/', function (req, res) {
   res.render('index',{
-      title: 'Express'
+      title: 'ChatMan'
   });
 });
