@@ -10,6 +10,11 @@ html
     script(src="/javascripts/chat.js")
   body
     div(id="wrapper")
+      div(id="servermessages", class="navbar navbar-top-fixed")
+        p(class="bg-primary container", style="display:none;")
+          span
+          button(type="button", class="close", aria-hidden="true")&times;
+
       div(id="mainhead") Hi. Welcome to <i>ChatMan</i>.
 
       div(id="allbuttons")
@@ -19,9 +24,12 @@ html
 
         button(id="leavechat", type="button", class="btn btn-danger") Leave this room
 
+      div(id="allrooms")
+        p Here be rooms:
+        p(class="norooms", style="display:none;") No active rooms. Go make one!
+        div(id="roomlist")
+
       div(id="upperbox")
-        ul(id="roomlist")
-          //li(class="roomname", data-roomname="none")
 
         div(id="chatrooms")
           //Nav Tabs
@@ -33,4 +41,4 @@ html
 
       div(id="lowerbox")
         // actual message
-        input(type="text", id="inputbox", data-roomname="none", placeholder="Enter message here. Press enter to send.")
+        input(type="text", id="inputbox", class="form-control", data-roomname="none", placeholder="Enter message here. Press enter to send.")

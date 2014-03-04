@@ -1,5 +1,5 @@
 body {
-  padding: 50px;
+  padding: 10px 50px 50px 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
@@ -9,5 +9,69 @@ a {
 
 #mainhead{
 	text-align: center;
+	font-size: 35px;
+	margin-top: 20px;
+}
+
+#allbuttons {
+	margin-top: 20px;
+}
+
+#allbuttons button{
+	display: block;
 	font-size: 20px;
+	height: 50px;
+	width: 60%;
+	margin: 5px auto;
+}
+
+#servermessages{
+	margin-bottom: 0;
+}
+
+#servermessages p{
+	width: 30%;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+}
+
+#servermessages button{
+	margin-top: 5px;
+}
+
+#allrooms{
+	margin-top: 20px;
+	margin-left: 10px;
+	margin-bottom: 20px;
+	max-width: 95%;
+}
+
+#allrooms p{
+	font-size: 20px;
+}
+
+#allrooms button{
+	margin-right: 5px;
+}
+
+#chatwindows{
+	margin:30px 0 30px 30px;
+	max-height: 900px;
+	overflow-y: auto; 
+}
+
+#inputbox{
+	margin-left: 30px;
+}
+
+#chatwindows .chats {
+	float:left;
+}
+
+#chatwindows .members {
+	float: right;
+	margin-right: 30px;
+	font-style: italic;
+	color: #acacac;
 }

@@ -6,9 +6,22 @@ $(document).ready(function(){
 	showroom();
 	var socket = io.connect("http://localhost:3000");
 
-	socket.on('message', function(data){
-		alert(data);
+	socket.on('message', function(data, msgtype){
+		$('#servermessages span').html(data);
+		$('#servermessages p').attr('class', 'bg-' + msgtype + ' container');
+		$('#servermessages p').fadeIn("slow");
+		hidemessage();
 	});
+
+	$('#servermessages button').click(function(){
+		$('#servermessages p').fadeOut("slow");
+	});
+
+	function hidemessage(){
+		setTimeout(function() {
+			$('#servermessages p').fadeOut("slow");
+		}, 2500);
+	}
 
 	$('#adduser').click(function(){
 		if(!connected){
@@ -36,11 +49,11 @@ $(document).ready(function(){
 
 	socket.on('addroom', function(newroom){
 		// add tab
-		var l = '<li><a href="#' + newroom + '" data-toggle="tab">' + newroom + '</a></li>';
+		var l = '<li><a href="#roomname-' + newroom + '" data-toggle="tab">' + newroom + '</a></li>';
 		$('#tablist').append(l);
 		$('a[data-toggle="tab"]').bind('click', tabclick_callback);
 		// add chat window
-		var l = '<div class="tab-pane" id="' + newroom + '">';
+		var l = '<div class="tab-pane" id="roomname-' + newroom + '">';
 		l += '<div class="chats"></div>';
 		l += '<ul class="members"></ul>';
 		l += '</div>';
@@ -49,44 +62,50 @@ $(document).ready(function(){
 
 	socket.on('joinedroom', function(newroom){
 		joined += 1;
+		console.log("joined: " + joined);
 		updateInputAndLeaveBox(newroom);
 		showroom();
-		$('a[href="#' + newroom+ '"]').click();
+		$('a[href="#roomname-' + newroom+ '"]').click();
 	});
 
-	$('#leavechat').click(function(){
+	$('button#leavechat').click(function(){
 		var roomname = $(this).attr("data-roomname");
+		alert(roomname);
 		socket.emit('leaveroom', roomname);
 	});
 
 	socket.on('removeroom', function(roomname){
-		$('a[href=#' + roomname + ']').parent().detach();
-		$('#' + roomname).detach();
+		$('a[href=#roomname-' + roomname + ']').parent().detach();
+		$('#roomname-' + roomname).detach();
 	});
 
 	socket.on('leftroom', function(data){
-		joined -=1;
+		joined--;
+		console.log("joined: " + joined);
+		console.log(data);
 		showroom();
-		for(var i in data){
-			$('a[href="#' + i + '"]').click();
-			updateInputAndLeaveBox(i);
-			break;
+		if(joined){
+			for(var i in data){
+				$('a[href="#roomname-' + i + '"]').click();
+				updateInputAndLeaveBox(i);
+				break;
+			}
 		}
 	});
 
 	socket.on('updatechat', function(roomname, sender, msg){
-		var chatwin = $('#' + roomname + ' .chats')[0];
+		var chatwin = $('#roomname-' + roomname + ' .chats')[0];
 		var text = '<p><b>' + sender + ': </b>' + msg + '</p>';
 		$(chatwin).append(text);
 	});
 
 	socket.on('updatemembers', function(roomname, data){
-		var memberswin = $('#' + roomname + ' .members')[0];
+		var memberswin = $('#roomname-' + roomname + ' .members')[0];
 		memberswin = $(memberswin);
 		var members = data[roomname];
 		memberswin.children().detach();
 		for(var i=0; i<members.length; i++){
-			var l = '<li class="membername">' + members[i] + '</li>';
+			var l = '<li class="membername list-unstyled">' + members[i] + '</li>';
 			memberswin.append(l);
 		}
 	});
@@ -94,11 +113,18 @@ $(document).ready(function(){
 	socket.on('updateroomlist', function(data){
 		// delete present rooms
 		$('#roomlist').children().detach();
+		$('#allrooms .norooms').fadeOut("fast");
 		// update list
+		var i = 0;
 		for(var roomname in data){
-			var l = '<li class="roomname" data-roomname="' + roomname + '">' + roomname + '</li>';
+			i++;
+			var l = '<button type="button" class="roomname btn btn-info" data-roomname="' + roomname + '" data-type="roomlink">' + roomname + '</button>';
 			$('#roomlist').append(l);
-			$('li[data-roomname="' + roomname+ '"]').bind('click', roomnameclick_callback);
+			$('button[data-roomname="' + roomname+ '"][data-type="roomlink"]').bind('click', roomnameclick_callback);
+		}
+
+		if(!i){
+			$('#allrooms .norooms').fadeIn("fast");
 		}
 	});
 
@@ -109,8 +135,9 @@ $(document).ready(function(){
 
 	function tabclick_callback(){
 		var roomname = $(this).attr('href');
-		roomname = roomname.slice(1); // remove the hash
+		roomname = roomname.slice(10); // remove the #roomname-
 		updateInputAndLeaveBox(roomname);
+		$('#inputbox').focus();
 	}
 
 	$('#inputbox').keypress(function(e){
@@ -148,12 +175,12 @@ $(document).ready(function(){
 		if(connected){
 			$('#adduser').hide();
 			$('#createroom').show();
-			$('#roomlist').show();
+			$('#allrooms').show();
 		}
 		else{
 			$('#adduser').show();
 			$('#createroom').hide();
-			$('#roomlist').hide();
+			$('#allrooms').hide();
 		}
 	}
 });
